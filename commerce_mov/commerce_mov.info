@@ -1,0 +1,6 @@
+name = Minimum Order Value
+description = 'Checks for minimum order value in cart page'
+core = 7.x
+
+package = Custom
+dependencies[] = commerce_cart
