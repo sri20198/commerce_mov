@@ -1,0 +1,45 @@
+<?php
+
+function commerce_mov_order_settings() {
+	$settings = array(
+		'currency_min' => array(
+			'INR' => 1000,
+			'USD' => 100,
+		),
+		'continue_shopping_url' => 'product-catalog',
+		'min_amount_message' => 'The minimum order amount is',
+	);
+	
+	return $settings;
+}
+
+function commerce_mov_form_alter(&$form, &$form_state, $form_id) {
+	if ($form_id == 'views_form_commerce_cart_form_default') {
+		global $user;
+
+		$order_settings = commerce_mov_order_settings();
+		
+		$order = commerce_cart_order_load($user->uid);
+		$order_total = $order->commerce_order_total['und'][0]['amount'] / 100;
+		$order_currency = $order->commerce_order_total['und'][0]['currency_code'];
+		
+		$min_amount = $order_settings['currency_min'][$order_currency];
+
+		if ($order_total < $min_amount) {
+			$msg = $order_settings['min_amount_message'] . ' ' . commerce_currency_get_symbol($order_currency) . ' ' . $min_amount . '.';
+			$_SESSION['messages'] = '';
+			drupal_set_message($msg, 'status', false);
+			$form['actions']['checkout']['#type'] = 'hidden';
+			$form['actions']['continue'] = array(
+				'#type' => 'submit',
+				'#value' => 'Continue shopping',
+				'#submit' => array('commerce_mov_continue_shopping'),
+			);
+		}
+	}
+}
+
+function commerce_mov_continue_shopping() {
+	$order_settings = commerce_mov_order_settings();
+	drupal_goto($order_settings['continue_shopping_url']);
+}
